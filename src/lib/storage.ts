@@ -39,6 +39,15 @@ export function saveConfig(config: AppConfig): void {
   localStorage.setItem(STORAGE_KEYS.theme, config.theme);
 }
 
+export function loadSessionName(): string {
+  if (typeof window === "undefined") return "";
+  return localStorage.getItem(STORAGE_KEYS.sessionName) ?? "";
+}
+
+export function saveSessionName(name: string): void {
+  localStorage.setItem(STORAGE_KEYS.sessionName, name);
+}
+
 export function loadHistory(): HistoryItem[] {
   if (typeof window === "undefined") return [];
   const items = safeParse<HistoryItem[]>(

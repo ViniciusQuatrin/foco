@@ -16,7 +16,11 @@ import {
   formatMMSS,
   nextMode,
 } from "@/lib/format";
-import { addHistoryItem } from "@/lib/storage";
+import {
+  addHistoryItem,
+  loadSessionName,
+  saveSessionName,
+} from "@/lib/storage";
 import { playEndBeep } from "@/lib/sound";
 import { notifyCycleEnd } from "@/lib/notifications";
 import { HistoryItem, Mode, TimerStatus } from "@/lib/types";
@@ -55,14 +59,18 @@ export function Timer() {
     }
   }, [config, mode, ready, timerStatus]);
 
-  // Seed session name from default once ready
+  // Restore the current session name, falling back to the configured default.
   useEffect(() => {
     if (!ready) return;
-    setSessionName((prev) =>
-      prev === "" && config.defaultSessionName
-        ? config.defaultSessionName
-        : prev,
-    );
+    const persisted = loadSessionName();
+    if (persisted !== "") {
+      setSessionName(persisted);
+      return;
+    }
+    if (config.defaultSessionName) {
+      setSessionName(config.defaultSessionName);
+      saveSessionName(config.defaultSessionName);
+    }
   }, [ready, config.defaultSessionName]);
 
   const announce = useCallback((msg: string) => {
@@ -259,7 +267,11 @@ export function Timer() {
             type="text"
             className="input"
             value={sessionName}
-            onChange={(e) => setSessionName(e.target.value)}
+            onChange={(e) => {
+              const nextName = e.target.value;
+              setSessionName(nextName);
+              saveSessionName(nextName);
+            }}
             placeholder={sessionCopy.placeholder}
             maxLength={80}
           />

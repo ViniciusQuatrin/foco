@@ -34,4 +34,5 @@ export const STORAGE_KEYS = {
   config: "foco:config",
   history: "foco:history",
   theme: "foco:theme",
+  sessionName: "foco:sessionName",
 } as const;
