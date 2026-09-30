@@ -49,3 +49,4 @@ Redirect used by the app: `${window.location.origin}/config` (matches Next expor
 
 1. **/config desktop layout** — From `min-width: 1024px`, wider page (`max-width: 58rem`) and 2-column grid: left = DURAÇÕES, right = Spotify + alerta/tema/nome. Mobile stays compact single column.
 2. **Shell border glitch** — Colorful glitch extended to neon HUD frame edges on `.page` (app shell), not only the clock. Default ON; fully quiet under `prefers-reduced-motion: reduce` (no glitch on borders or clock).
+3. **Timer viewport centering** — `/` only: `.timer-shell` flex-centers the focus card (H+V) with extra top padding; `min-height: 100dvh` + `safe center` so short screens still scroll (no fixed-100vh holes). Config/Spotify layouts untouched.

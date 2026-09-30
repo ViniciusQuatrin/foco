@@ -210,96 +210,98 @@ export function Timer() {
   const timeText = formatMMSS(remaining);
 
   return (
-    <div className="page page-timer">
-      <AppHeader />
-      <main id="timer" className="timer-main" tabIndex={-1}>
-        <button
-          type="button"
-          className="mode-label"
-          aria-label={modes[mode]}
-          onClick={cycleMode}
-          disabled={!canCycleMode}
-        >
-          {modes[mode]}
-        </button>
-
-        <div
-          className={`timer-display${isRunning ? " is-running" : ""}`}
-          aria-hidden={false}
-        >
-          <div
-            className={`time${isRunning ? " time-glitch" : ""}`}
-            data-text={timeText}
-            aria-label={timeText}
-          >
-            {timeText}
-          </div>
-          <div className="timer-status">{statusCopy[timerStatus]}</div>
-        </div>
-
-        {endMsg ? (
-          <p className="end-feedback" role="status">
-            {endMsg}
-          </p>
-        ) : null}
-
-        <div className="controls">
-          {isRunning ? (
-            <button
-              type="button"
-              className="btn btn-primary touch"
-              onClick={pause}
-              aria-label={a11y.pause}
-            >
-              {controls.pause}
-            </button>
-          ) : (
-            <button
-              type="button"
-              className="btn btn-primary touch"
-              onClick={start}
-              aria-label={a11y.play}
-              disabled={remaining <= 0}
-            >
-              {controls.play}
-            </button>
-          )}
+    <div className="timer-shell">
+      <div className="page page-timer">
+        <AppHeader />
+        <main id="timer" className="timer-main" tabIndex={-1}>
           <button
             type="button"
-            className="btn btn-secondary touch"
-            onClick={reset}
-            aria-label={a11y.reset}
+            className="mode-label"
+            aria-label={modes[mode]}
+            onClick={cycleMode}
+            disabled={!canCycleMode}
           >
-            {controls.reset}
+            {modes[mode]}
           </button>
-        </div>
 
-        <label className="session-field">
-          <span className="field-label">{sessionCopy.label}</span>
-          <input
-            type="text"
-            className="input"
-            value={sessionName}
-            onChange={(e) => {
-              const nextName = e.target.value;
-              setSessionName(nextName);
-              saveSessionName(nextName);
-            }}
-            placeholder={sessionCopy.placeholder}
-            maxLength={80}
-          />
-        </label>
+          <div
+            className={`timer-display${isRunning ? " is-running" : ""}`}
+            aria-hidden={false}
+          >
+            <div
+              className={`time${isRunning ? " time-glitch" : ""}`}
+              data-text={timeText}
+              aria-label={timeText}
+            >
+              {timeText}
+            </div>
+            <div className="timer-status">{statusCopy[timerStatus]}</div>
+          </div>
 
-        <nav className="timer-nav" aria-label="Secundária">
-          <Link href="/historico" className="btn btn-secondary touch">
-            {nav.historico}
-          </Link>
-          <Link href="/config" className="btn btn-secondary touch">
-            {nav.config}
-          </Link>
-        </nav>
-      </main>
-      <LiveRegion message={liveMsg} />
+          {endMsg ? (
+            <p className="end-feedback" role="status">
+              {endMsg}
+            </p>
+          ) : null}
+
+          <div className="controls">
+            {isRunning ? (
+              <button
+                type="button"
+                className="btn btn-primary touch"
+                onClick={pause}
+                aria-label={a11y.pause}
+              >
+                {controls.pause}
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="btn btn-primary touch"
+                onClick={start}
+                aria-label={a11y.play}
+                disabled={remaining <= 0}
+              >
+                {controls.play}
+              </button>
+            )}
+            <button
+              type="button"
+              className="btn btn-secondary touch"
+              onClick={reset}
+              aria-label={a11y.reset}
+            >
+              {controls.reset}
+            </button>
+          </div>
+
+          <label className="session-field">
+            <span className="field-label">{sessionCopy.label}</span>
+            <input
+              type="text"
+              className="input"
+              value={sessionName}
+              onChange={(e) => {
+                const nextName = e.target.value;
+                setSessionName(nextName);
+                saveSessionName(nextName);
+              }}
+              placeholder={sessionCopy.placeholder}
+              maxLength={80}
+            />
+          </label>
+
+          <nav className="timer-nav" aria-label="Secundária">
+            <Link href="/historico" className="btn btn-secondary touch">
+              {nav.historico}
+            </Link>
+            <Link href="/config" className="btn btn-secondary touch">
+              {nav.config}
+            </Link>
+          </nav>
+        </main>
+        <LiveRegion message={liveMsg} />
+      </div>
     </div>
   );
 }

@@ -228,7 +228,25 @@ body {
   }
 }
 
+/* Timer only: center HUD card in the viewport (mobile-first).
+   min-height + flex + padding — not fixed 100vh — so short screens still scroll. */
+.timer-shell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: safe center;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 100dvh;
+  padding: 1.75rem 0.75rem 1.5rem;
+}
+
 .page-timer {
+  width: 100%;
+  max-width: 28rem;
+  flex-shrink: 0;
+  margin-inline: auto;
+  padding-top: 1rem;
   padding-bottom: 1rem;
 }
 
