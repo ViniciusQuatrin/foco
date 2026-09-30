@@ -13,10 +13,13 @@ import {
 } from "@/lib/spotify";
 
 const POLL_MS = 5000;
-/** Spotify player state lags pause; ignore stale is_playing=true briefly. */
-const PAUSE_HOLD_MS = 2500;
 
 type TrackInfo = { trackName: string; artistName: string };
+
+type RefreshOpts = {
+  /** PRÓXIMA while paused: accept a new track from the API. */
+  allowTrackUpdate?: boolean;
+};
 
 function trackLabel(trackName: string, artistName: string): string {
   const track = trackName.trim();
@@ -53,10 +56,9 @@ export function SpotifyMiniplayer() {
   const [busy, setBusy] = useState(false);
   const [actionError, setActionError] = useState("");
   const mountedRef = useRef(true);
-  const ignorePlayingUntilRef = useRef(0);
-  /** Last known track — kept across pause even if Spotify returns 204. */
+  /** Last known track — frozen while pausedLocally unless PRÓXIMA. */
   const lastTrackRef = useRef<TrackInfo | null>(null);
-  /** User hit PAUSAR; keep muted track until play/skip or real new playback. */
+  /** User hit PAUSAR; stay muted until TOCAR (or PRÓXIMA follows API). */
   const pausedLocallyRef = useRef(false);
 
   const rememberTrack = (s: SpotifyPlaybackSnapshot) => {
@@ -68,7 +70,7 @@ export function SpotifyMiniplayer() {
     }
   };
 
-  const refresh = useCallback(async () => {
+  const refresh = useCallback(async (opts?: RefreshOpts) => {
     if (!isSpotifyConnected()) {
       if (mountedRef.current) setVisible(false);
       return;
@@ -81,38 +83,46 @@ export function SpotifyMiniplayer() {
       return;
     }
 
-    rememberTrack(next);
-
-    const holdingPause = Date.now() < ignorePlayingUntilRef.current;
-    const wantPaused =
-      pausedLocallyRef.current || holdingPause;
-
-    if (wantPaused) {
-      if (next.kind === "track" && next.isPlaying && holdingPause) {
-        // Stale is_playing=true right after PAUSAR
-        setSnap(pausedSnap(next));
-        return;
-      }
-      if (next.kind === "track" && !next.isPlaying) {
-        setSnap(pausedSnap(next));
-        return;
-      }
-      if (next.kind === "idle" && lastTrackRef.current) {
-        // 204 / empty while user paused — keep gray track label
-        setSnap(pausedSnap(lastTrackRef.current));
-        return;
-      }
-      if (next.kind === "track" && next.isPlaying && !holdingPause) {
-        // Real resume from another device — clear local pause
-        pausedLocallyRef.current = false;
+    if (pausedLocallyRef.current) {
+      if (opts?.allowTrackUpdate) {
+        if (next.kind === "track") {
+          rememberTrack(next);
+          if (next.isPlaying) {
+            // Skip often starts the next track — follow API
+            pausedLocallyRef.current = false;
+            setSnap(next);
+          } else {
+            setSnap(pausedSnap(next));
+          }
+          return;
+        }
+        if (next.kind === "idle" && lastTrackRef.current) {
+          setSnap(pausedSnap(lastTrackRef.current));
+          return;
+        }
         setSnap(next);
         return;
       }
+
+      // Local pause lock: never accept isPlaying=true; never swap track from poll
+      if (lastTrackRef.current) {
+        setSnap(pausedSnap(lastTrackRef.current));
+        return;
+      }
+      if (next.kind === "track") {
+        rememberTrack(next);
+        setSnap(pausedSnap(next));
+        return;
+      }
+      if (next.kind === "error") {
+        setSnap(next);
+        return;
+      }
+      setSnap({ kind: "idle" });
+      return;
     }
 
-    if (next.kind === "track" && next.isPlaying) {
-      pausedLocallyRef.current = false;
-    }
+    rememberTrack(next);
     setSnap(next);
   }, []);
 
@@ -152,7 +162,6 @@ export function SpotifyMiniplayer() {
       }
       if (mode === "pause") {
         pausedLocallyRef.current = true;
-        ignorePlayingUntilRef.current = Date.now() + PAUSE_HOLD_MS;
         setSnap((prev) => {
           if (prev.kind === "track") {
             const info = {
@@ -165,20 +174,15 @@ export function SpotifyMiniplayer() {
           if (lastTrackRef.current) return pausedSnap(lastTrackRef.current);
           return prev;
         });
-        window.setTimeout(() => {
-          if (mountedRef.current) void refresh();
-        }, PAUSE_HOLD_MS);
         return;
       }
       if (mode === "play") {
         pausedLocallyRef.current = false;
-        ignorePlayingUntilRef.current = 0;
+        await refresh();
+        return;
       }
-      if (mode === "next") {
-        // Keep pause flag only if we were paused; refresh will update track
-        ignorePlayingUntilRef.current = 0;
-      }
-      await refresh();
+      // next — allow track update; keep or clear pause based on API
+      await refresh({ allowTrackUpdate: true });
     } finally {
       if (mountedRef.current) setBusy(false);
     }
