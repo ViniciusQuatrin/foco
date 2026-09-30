@@ -52,3 +52,5 @@ Redirect used by the app: `${window.location.origin}/config` (matches Next expor
 3. **Timer viewport centering** — `/` only: `.timer-shell` flex-centers the focus card (H+V) with extra top padding; `min-height: 100dvh` + `safe center` so short screens still scroll (no fixed-100vh holes). Config/Spotify layouts untouched.
 4. **Spotify miniplayer** — When connected: compact HUD on `/` (timer) showing now-playing + play/pause + skip next; must not compete with timer Play. Optional summary on `/config`. States: nothing playing / playing / API error. Mobile: low height, targets ≥44px. OUT: playlists, volume UI, auto-resume beyond pause/skip.
 5. **Miniplayer paused label (produto)** — Pausado com faixa: `{faixa} · {artista}` em cinza; `NADA TOCANDO` só sem track. Hold 2.5s pós-PAUSAR ainda evita poll `is_playing` stale.
+
+6. **Logo marca** — Asset glitch F (B&W+RGB) em `/public/brand/`; header ícone+nome (mobile prioriza ícone); favicon/apple/PWA; `/entrar` logo 128px. Sem animação em loop.

@@ -262,6 +262,10 @@ body {
 }
 
 .brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
   font-size: 1.35rem;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -269,6 +273,56 @@ body {
   text-decoration: none;
   color: var(--fg);
   text-shadow: 0 0 12px color-mix(in srgb, var(--accent) 50%, transparent);
+}
+
+.brand-mark {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border: 2px solid var(--border);
+  background: #000;
+  image-rendering: auto;
+  /* Static asset glitch — no CSS animation competing with timer */
+}
+
+.brand-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 359px) {
+  .brand-name {
+    /* Mobile narrow: icon first */
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .brand-mark {
+    width: 40px;
+    height: 40px;
+  }
+}
+
+.entrar-brand {
+  display: flex;
+  justify-content: center;
+  margin: 0.25rem 0 0.75rem;
+}
+
+.entrar-logo {
+  width: 128px;
+  height: 128px;
+  border: 3px solid var(--border);
+  background: #000;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 30%, transparent);
 }
 
 .header-actions {

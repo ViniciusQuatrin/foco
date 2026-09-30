@@ -22,6 +22,17 @@ export function LoginForm() {
     <div className="page">
       <AppHeader showEnter={false} />
       <main className="page-body">
+        <div className="entrar-brand" aria-hidden="true">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/brand/logo-256.png"
+            width={128}
+            height={128}
+            className="entrar-logo"
+            alt=""
+            decoding="async"
+          />
+        </div>
         <h1 className="page-title">{entrarPage.title}</h1>
         <p className="hint">{entrarPage.promise}</p>
 

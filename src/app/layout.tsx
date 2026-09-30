@@ -20,6 +20,16 @@ const mono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: docs.timer,
   description: product.name,
+  applicationName: product.name,
+  manifest: "/manifest.webmanifest",
+  icons: {
+    icon: [
+      { url: "/brand/favicon-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/brand/favicon-16.png", sizes: "16x16", type: "image/png" },
+      { url: "/favicon.ico", sizes: "any" },
+    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+  },
 };
 
 const themeBoot = `(function(){try{var t=localStorage.getItem("foco:theme");if(!t){var c=localStorage.getItem("foco:config");if(c){t=JSON.parse(c).theme}}if(t!=="light"&&t!=="dark")t="dark";document.documentElement.setAttribute("data-theme",t);if(t==="dark")document.documentElement.classList.add("dark")}catch(e){document.documentElement.setAttribute("data-theme","dark");document.documentElement.classList.add("dark")}})();`;
