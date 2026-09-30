@@ -191,3 +191,28 @@ Fonte: brief/IA ux v2. Tom igual (cyberpunk/brutalista). Não muda Timer além d
 
 ### Fora do v2 (não escrever)
 Playlists · volume · retomar música · reduced-motion copy especial.
+
+---
+
+# FOCO v2 — addendum miniplayer Spotify
+Tom cyber, curto. Sem playlists/volume.
+
+## Miniplayer (Timer / chrome quando Spotify conectado)
+
+### Estados
+- Nada tocando: `NADA TOCANDO`
+- Tocando: mostra `{faixa}` · `{artista}` (se API der; senão `TOCANDO`)
+- Erro: `SPOTIFY FALHOU`
+
+### Ações
+- Pausar: `PAUSAR` · aria `Pausar faixa`
+- Play: `TOCAR` · aria `Tocar faixa`
+- Próxima: `PRÓXIMA` · aria `Próxima faixa`
+
+### Erros curtos (miniplayer)
+- Genérico: `Não deu pra controlar o Spotify.`
+- Sem dispositivo ativo: `Abre o Spotify num aparelho e tenta de novo.`
+
+### Resumo opcional em `/config` (quando conectado)
+- Linha: `Miniplayer no timer: play · pausa · próxima`
+- Desconectado: (sem linha — só `Conectar Spotify`)

@@ -134,6 +134,10 @@ export function SpotifySection() {
         )}
       </div>
 
+      {ui === "connected" ? (
+        <p className="hint spotify-mini-hint">{configPage.spotifyMiniplayerHint}</p>
+      ) : null}
+
       <label className="toggle-row touch">
         <span>{configPage.spotifyPauseToggle}</span>
         <input

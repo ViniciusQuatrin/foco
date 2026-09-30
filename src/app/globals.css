@@ -777,3 +777,82 @@ body {
   letter-spacing: 0;
   font-weight: 700;
 }
+
+
+/* —— Spotify miniplayer (timer chrome; secondary to INICIAR) —— */
+.spotify-mini {
+  width: 100%;
+  max-width: 28rem;
+  margin: 0.75rem auto 0;
+  box-sizing: border-box;
+  border: 3px solid var(--border);
+  background: var(--surface);
+  padding: 0.45rem 0.55rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  /* No neon glitch — quiet under reduced-motion and by default */
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 25%, transparent);
+}
+
+.spotify-mini-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.spotify-mini-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.spotify-mini-meta.is-playing .spotify-mini-label {
+  color: var(--accent);
+  text-transform: none;
+  letter-spacing: 0.02em;
+}
+
+.spotify-mini-meta.is-error .spotify-mini-label {
+  color: var(--warn);
+}
+
+.spotify-mini-error {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--warn);
+  line-height: 1.25;
+}
+
+.spotify-mini-controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.4rem;
+}
+
+.spotify-mini-controls .btn {
+  font-size: 0.75rem;
+  padding: 0.55rem 0.5rem;
+  box-shadow: none;
+}
+
+.spotify-mini-hint {
+  margin: 0.35rem 0 0;
+}
+
+@media (min-width: 768px) {
+  .spotify-mini {
+    padding: 0.55rem 0.7rem;
+    margin-top: 1rem;
+  }
+
+  .spotify-mini-label {
+    font-size: 0.8rem;
+  }
+}

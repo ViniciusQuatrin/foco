@@ -28,6 +28,7 @@ import { HistoryItem, Mode, TimerStatus } from "@/lib/types";
 import { useTheme } from "./ThemeProvider";
 import { AppHeader } from "./AppHeader";
 import { LiveRegion } from "./LiveRegion";
+import { SpotifyMiniplayer } from "./SpotifyMiniplayer";
 
 export function Timer() {
   const { config, ready } = useTheme();
@@ -302,6 +303,7 @@ export function Timer() {
         </main>
         <LiveRegion message={liveMsg} />
       </div>
+      <SpotifyMiniplayer />
     </div>
   );
 }

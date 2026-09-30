@@ -274,3 +274,110 @@ export async function pauseSpotifyIfNeeded(): Promise<void> {
     // network — ignore; timer must not break
   }
 }
+
+/* —— Playback (miniplayer) —— */
+
+const PLAYER_URL = "https://api.spotify.com/v1/me/player";
+const PLAY_URL = "https://api.spotify.com/v1/me/player/play";
+const NEXT_URL = "https://api.spotify.com/v1/me/player/next";
+
+export type SpotifyPlaybackSnapshot =
+  | { kind: "idle" }
+  | {
+      kind: "track";
+      isPlaying: boolean;
+      trackName: string;
+      artistName: string;
+    }
+  | { kind: "error" };
+
+export type SpotifyControlResult =
+  | { ok: true }
+  | { ok: false; reason: "no_device" | "auth" | "generic" };
+
+async function authorizedFetch(
+  url: string,
+  init: RequestInit = {},
+): Promise<Response | null> {
+  const access = await getValidAccessToken();
+  if (!access) return null;
+  try {
+    return await fetch(url, {
+      ...init,
+      headers: {
+        Authorization: `Bearer ${access}`,
+        ...(init.headers ?? {}),
+      },
+    });
+  } catch {
+    return null;
+  }
+}
+
+function mapControlResponse(res: Response | null): SpotifyControlResult {
+  if (!res) return { ok: false, reason: "generic" };
+  if (res.status === 204 || res.ok) return { ok: true };
+  if (res.status === 404) return { ok: false, reason: "no_device" };
+  if (res.status === 401 || res.status === 403) {
+    clearSpotifyTokens();
+    return { ok: false, reason: "auth" };
+  }
+  return { ok: false, reason: "generic" };
+}
+
+/** Now-playing snapshot for the miniplayer. Reuses the same token layer. */
+export async function fetchSpotifyPlayback(): Promise<SpotifyPlaybackSnapshot> {
+  if (!loadSpotifyTokens()) return { kind: "idle" };
+
+  const res = await authorizedFetch(PLAYER_URL, { method: "GET" });
+  if (!res) return { kind: "error" };
+
+  if (res.status === 204) return { kind: "idle" };
+  if (res.status === 401 || res.status === 403) {
+    clearSpotifyTokens();
+    return { kind: "error" };
+  }
+  if (!res.ok) return { kind: "error" };
+
+  try {
+    const data = (await res.json()) as {
+      is_playing?: boolean;
+      item?: {
+        name?: string;
+        artists?: Array<{ name?: string }>;
+      } | null;
+    };
+    const item = data.item;
+    if (!item || typeof item.name !== "string" || !item.name) {
+      return { kind: "idle" };
+    }
+    const artists = Array.isArray(item.artists)
+      ? item.artists
+          .map((a) => a?.name)
+          .filter((n): n is string => typeof n === "string" && n.length > 0)
+      : [];
+    return {
+      kind: "track",
+      isPlaying: Boolean(data.is_playing),
+      trackName: item.name,
+      artistName: artists.join(", "),
+    };
+  } catch {
+    return { kind: "error" };
+  }
+}
+
+export async function spotifyPlay(): Promise<SpotifyControlResult> {
+  const res = await authorizedFetch(PLAY_URL, { method: "PUT" });
+  return mapControlResponse(res);
+}
+
+export async function spotifyPause(): Promise<SpotifyControlResult> {
+  const res = await authorizedFetch(PAUSE_URL, { method: "PUT" });
+  return mapControlResponse(res);
+}
+
+export async function spotifySkipNext(): Promise<SpotifyControlResult> {
+  const res = await authorizedFetch(NEXT_URL, { method: "POST" });
+  return mapControlResponse(res);
+}

@@ -22,6 +22,9 @@ export const a11y = {
   unitMinutes: "Minutos",
   unitHours: "Horas",
   spotifyPauseToggle: "Pausar Spotify ao fim do foco",
+  spotifyPlayTrack: "Tocar faixa",
+  spotifyPauseTrack: "Pausar faixa",
+  spotifyNextTrack: "Próxima faixa",
 } as const;
 
 export const modes = {
@@ -107,6 +110,7 @@ export const configPage = {
   spotifyConnected: "Conectado",
   spotifyDisconnected: "Desconectado",
   spotifyPauseToggle: "Pausar música quando o foco acabar",
+  spotifyMiniplayerHint: "Miniplayer no timer: play · pausa · próxima",
   spotifyErrorGeneric: "Spotify não conectou. Tenta de novo.",
   spotifyErrorCancelled: "Conexão cancelada.",
   spotifyErrorSession: "Sessão Spotify expirou. Conecta de novo.",
@@ -127,4 +131,15 @@ export const entrarPage = {
   password: "Senha",
   submit: "Entrar",
   error: "Não deu. Confere e-mail e senha.",
+} as const;
+
+export const spotifyMini = {
+  idle: "NADA TOCANDO",
+  playingFallback: "TOCANDO",
+  failed: "SPOTIFY FALHOU",
+  play: "TOCAR",
+  pause: "PAUSAR",
+  next: "PRÓXIMA",
+  errorGeneric: "Não deu pra controlar o Spotify.",
+  errorNoDevice: "Abre o Spotify num aparelho e tenta de novo.",
 } as const;
