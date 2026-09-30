@@ -13,11 +13,14 @@ import {
 } from "@/lib/spotify";
 
 const POLL_MS = 5000;
+/** Spotify player state lags pause; ignore "playing" polls briefly after local pause. */
+const PAUSE_HOLD_MS = 2500;
 
 function labelForSnapshot(snap: SpotifyPlaybackSnapshot): string {
-  if (snap.kind === "idle") return spotifyMini.idle;
-  if (snap.kind === "error") return spotifyMini.failed;
-  // Paused / not actively playing → idle label (QA + copy: NADA TOCANDO)
+  if (snap.kind !== "track") {
+    if (snap.kind === "error") return spotifyMini.failed;
+    return spotifyMini.idle;
+  }
   if (!snap.isPlaying) return spotifyMini.idle;
   const track = snap.trackName.trim();
   const artist = snap.artistName.trim();
@@ -38,6 +41,7 @@ export function SpotifyMiniplayer() {
   const [busy, setBusy] = useState(false);
   const [actionError, setActionError] = useState("");
   const mountedRef = useRef(true);
+  const ignorePlayingUntilRef = useRef(0);
 
   const refresh = useCallback(async () => {
     if (!isSpotifyConnected()) {
@@ -49,6 +53,16 @@ export function SpotifyMiniplayer() {
     if (!mountedRef.current) return;
     if (!isSpotifyConnected()) {
       setVisible(false);
+      return;
+    }
+    const holdingPause = Date.now() < ignorePlayingUntilRef.current;
+    if (
+      holdingPause &&
+      next.kind === "track" &&
+      next.isPlaying
+    ) {
+      // Stale "still playing" right after PAUSAR — keep idle label
+      setSnap({ kind: "idle" });
       return;
     }
     setSnap(next);
@@ -76,6 +90,7 @@ export function SpotifyMiniplayer() {
 
   async function runControl(
     action: () => Promise<SpotifyControlResult>,
+    mode: "pause" | "play" | "next",
   ): Promise<void> {
     if (busy) return;
     setBusy(true);
@@ -85,15 +100,20 @@ export function SpotifyMiniplayer() {
       if (!result.ok) {
         setActionError(controlErrorMessage(result));
         if (result.reason === "auth") setVisible(false);
-      } else {
-        // After pause, flip to idle label immediately; poll confirms
-        setSnap((prev) =>
-          prev.kind === "track" && prev.isPlaying
-            ? { ...prev, isPlaying: false }
-            : prev,
-        );
-        await refresh();
+        return;
       }
+      if (mode === "pause") {
+        ignorePlayingUntilRef.current = Date.now() + PAUSE_HOLD_MS;
+        setSnap({ kind: "idle" });
+        window.setTimeout(() => {
+          if (mountedRef.current) void refresh();
+        }, PAUSE_HOLD_MS);
+        return;
+      }
+      if (mode === "play") {
+        ignorePlayingUntilRef.current = 0;
+      }
+      await refresh();
     } finally {
       if (mountedRef.current) setBusy(false);
     }
@@ -106,18 +126,21 @@ export function SpotifyMiniplayer() {
   const statusClass =
     snap.kind === "error"
       ? "is-error"
-      : snap.kind === "track" && snap.isPlaying
+      : isPlaying
         ? "is-playing"
         : "is-idle";
+  const label = labelForSnapshot(snap);
 
   return (
     <aside
       className="spotify-mini"
       aria-label="Spotify"
-      data-state={snap.kind}
+      data-state={isPlaying ? "playing" : snap.kind === "error" ? "error" : "idle"}
     >
       <div className={`spotify-mini-meta ${statusClass}`} role="status">
-        <span className="spotify-mini-label">{labelForSnapshot(snap)}</span>
+        <span className="spotify-mini-label" key={label}>
+          {label}
+        </span>
         {actionError ? (
           <span className="spotify-mini-error">{actionError}</span>
         ) : null}
@@ -128,7 +151,7 @@ export function SpotifyMiniplayer() {
             type="button"
             className="btn btn-secondary touch"
             disabled={controlsDisabled}
-            onClick={() => void runControl(spotifyPause)}
+            onClick={() => void runControl(spotifyPause, "pause")}
             aria-label={a11y.spotifyPauseTrack}
           >
             {spotifyMini.pause}
@@ -138,7 +161,7 @@ export function SpotifyMiniplayer() {
             type="button"
             className="btn btn-secondary touch"
             disabled={controlsDisabled}
-            onClick={() => void runControl(spotifyPlay)}
+            onClick={() => void runControl(spotifyPlay, "play")}
             aria-label={a11y.spotifyPlayTrack}
           >
             {spotifyMini.play}
@@ -148,7 +171,7 @@ export function SpotifyMiniplayer() {
           type="button"
           className="btn btn-secondary touch"
           disabled={controlsDisabled}
-          onClick={() => void runControl(spotifySkipNext)}
+          onClick={() => void runControl(spotifySkipNext, "next")}
           aria-label={a11y.spotifyNextTrack}
         >
           {spotifyMini.next}
