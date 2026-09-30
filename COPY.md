@@ -140,3 +140,54 @@ Corpo: `Quando um ciclo terminar, aparece aqui.`
 
 ## O que NÃO escrever (v1)
 Sync, ads, paywall, equipe, calendário, Slack, “obrigatório criar conta”, ciclos N focos.
+
+---
+
+# FOCO v2 — delta microcopy
+Fonte: brief/IA ux v2. Tom igual (cyberpunk/brutalista). Não muda Timer além do skin.
+
+## `/config` — unidade de duração (substitui hint “Valor em segundos.”)
+
+### Unidade (seletor por campo ou global — conforme UI)
+- `s`
+- `min`
+- `h`
+- aria: `Segundos` · `Minutos` · `Horas`
+
+### Campos
+- Labels inalterados: `Foco` · `Pausa curta` · `Pausa longa`
+- Placeholder valor: `0`
+- Hint curta: `Padrão: minutos. Interno: segundos.`
+- (Se hint por unidade ativa:)
+  - s: `Em segundos.`
+  - min: `Em minutos.`
+  - h: `Em horas.`
+
+### Validação (além da v1)
+- Zero/negativo: `Precisa ser um número maior que zero.` (mantém)
+- Unidade sem valor: `Informa um valor.`
+
+## `/config` — Spotify (nova seção)
+
+### Seção
+`SPOTIFY`
+
+### Ação
+- Desconectado: botão `Conectar Spotify`
+- Conectado: `Conectado` · ação secundária `Desconectar`
+- Carregando OAuth: `Conectando…`
+
+### Toggle
+- Label: `Pausar música quando o foco acabar`
+- aria: `Pausar Spotify ao fim do foco`
+
+### Estados / erros
+- Desconectado (texto): `Desconectado`
+- Conectado (texto): `Conectado`
+- Erro genérico OAuth: `Spotify não conectou. Tenta de novo.`
+- Erro cancelado pelo user: `Conexão cancelada.`
+- Erro sessão/token: `Sessão Spotify expirou. Conecta de novo.`
+- Spotify indisponível: `Spotify fora do ar. Tenta mais tarde.`
+
+### Fora do v2 (não escrever)
+Playlists · volume · retomar música · reduced-motion copy especial.

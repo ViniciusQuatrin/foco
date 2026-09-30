@@ -2,19 +2,69 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
-import { configPage, nav } from "@/content/copy";
+import { a11y, configPage, nav } from "@/content/copy";
 import {
   notificationPermission,
   requestNotificationPermission,
 } from "@/lib/notifications";
-import { AppConfig, Theme } from "@/lib/types";
+import { formatUnitInput, unitToSeconds } from "@/lib/units";
+import { AppConfig, DurationUnit, Theme } from "@/lib/types";
 import { useTheme } from "./ThemeProvider";
 import { AppHeader } from "./AppHeader";
 import { LiveRegion } from "./LiveRegion";
+import { SpotifySection } from "./SpotifySection";
+
+type DurationKey = "foco" | "pausaCurta" | "pausaLonga";
+
+const DURATION_MAP: Record<
+  DurationKey,
+  {
+    secondsKey: "focoSeconds" | "pausaCurtaSeconds" | "pausaLongaSeconds";
+    unitKey: "focoUnit" | "pausaCurtaUnit" | "pausaLongaUnit";
+    label: string;
+  }
+> = {
+  foco: {
+    secondsKey: "focoSeconds",
+    unitKey: "focoUnit",
+    label: configPage.foco,
+  },
+  pausaCurta: {
+    secondsKey: "pausaCurtaSeconds",
+    unitKey: "pausaCurtaUnit",
+    label: configPage.pausaCurta,
+  },
+  pausaLonga: {
+    secondsKey: "pausaLongaSeconds",
+    unitKey: "pausaLongaUnit",
+    label: configPage.pausaLonga,
+  },
+};
+
+const UNITS: DurationUnit[] = ["s", "min", "h"];
+
+const UNIT_ARIA: Record<DurationUnit, string> = {
+  s: a11y.unitSeconds,
+  min: a11y.unitMinutes,
+  h: a11y.unitHours,
+};
 
 export function ConfigForm() {
   const { config, setConfig, ready } = useTheme();
   const [draft, setDraft] = useState<AppConfig>(config);
+  const [displayValues, setDisplayValues] = useState<Record<DurationKey, string>>(
+    {
+      foco: formatUnitInput(config.focoSeconds, config.focoUnit),
+      pausaCurta: formatUnitInput(
+        config.pausaCurtaSeconds,
+        config.pausaCurtaUnit,
+      ),
+      pausaLonga: formatUnitInput(
+        config.pausaLongaSeconds,
+        config.pausaLongaUnit,
+      ),
+    },
+  );
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [toast, setToast] = useState("");
   const [liveMsg, setLiveMsg] = useState("");
@@ -23,7 +73,19 @@ export function ConfigForm() {
   >("default");
 
   useEffect(() => {
-    if (ready) setDraft(config);
+    if (!ready) return;
+    setDraft(config);
+    setDisplayValues({
+      foco: formatUnitInput(config.focoSeconds, config.focoUnit),
+      pausaCurta: formatUnitInput(
+        config.pausaCurtaSeconds,
+        config.pausaCurtaUnit,
+      ),
+      pausaLonga: formatUnitInput(
+        config.pausaLongaSeconds,
+        config.pausaLongaUnit,
+      ),
+    });
   }, [ready, config]);
 
   useEffect(() => {
@@ -81,35 +143,106 @@ export function ConfigForm() {
     persist(next);
   }
 
-  function numField(
-    key: "focoSeconds" | "pausaCurtaSeconds" | "pausaLongaSeconds",
-    label: string,
-    errKey: string,
-  ) {
+  function applyDurationValue(key: DurationKey, raw: string, unit: DurationUnit) {
+    const trimmed = raw.trim();
+    if (trimmed === "" || trimmed === "-" || trimmed === ".") {
+      setErrors((prev) => ({
+        ...prev,
+        [key]: configPage.missingValue,
+      }));
+      return;
+    }
+    const num = Number(trimmed);
+    if (!Number.isFinite(num)) {
+      setErrors((prev) => ({
+        ...prev,
+        [key]: configPage.invalidDuration,
+      }));
+      return;
+    }
+    const seconds = unitToSeconds(num, unit);
+    if (!(seconds > 0)) {
+      setErrors((prev) => ({
+        ...prev,
+        [key]: configPage.invalidDuration,
+      }));
+      return;
+    }
+    const meta = DURATION_MAP[key];
+    const next = {
+      ...draft,
+      [meta.secondsKey]: seconds,
+      [meta.unitKey]: unit,
+    } as AppConfig;
+    setDraft(next);
+    setErrors((prev) => {
+      const copy = { ...prev };
+      delete copy[key];
+      return copy;
+    });
+    persist(next);
+  }
+
+  function onUnitChange(key: DurationKey, unit: DurationUnit) {
+    const meta = DURATION_MAP[key];
+    const seconds = draft[meta.secondsKey];
+    const next = { ...draft, [meta.unitKey]: unit } as AppConfig;
+    setDraft(next);
+    setDisplayValues((prev) => ({
+      ...prev,
+      [key]: formatUnitInput(seconds, unit),
+    }));
+    persist(next);
+  }
+
+  function durationField(key: DurationKey) {
+    const meta = DURATION_MAP[key];
+    const unit = draft[meta.unitKey];
     return (
-      <label className="field">
-        <span className="field-label">
-          {label}{" "}
-          <span className="suffix">({configPage.suffix})</span>
+      <div className="duration-field">
+        <span className="field-label" id={`label-${key}`}>
+          {meta.label}
         </span>
-        <input
-          type="number"
-          className="input"
-          min={1}
-          step={1}
-          value={draft[key]}
-          onChange={(e) =>
-            setDraft({
-              ...draft,
-              [key]: Number(e.target.value),
-            })
-          }
-          onBlur={() => persist(draft)}
-        />
-        {errors[errKey] ? (
-          <span className="field-error">{errors[errKey]}</span>
+        <div className="duration-row">
+          <input
+            type="number"
+            className="input"
+            min={0}
+            step="any"
+            inputMode="decimal"
+            placeholder={configPage.valuePlaceholder}
+            value={displayValues[key]}
+            aria-labelledby={`label-${key}`}
+            onChange={(e) =>
+              setDisplayValues((prev) => ({
+                ...prev,
+                [key]: e.target.value,
+              }))
+            }
+            onBlur={() =>
+              applyDurationValue(key, displayValues[key], unit)
+            }
+          />
+          <div className="unit-pills" role="group">
+            {UNITS.map((u) => (
+              <button
+                key={u}
+                type="button"
+                className={`btn btn-unit touch ${unit === u ? "btn-primary" : "btn-secondary"}`}
+                aria-label={UNIT_ARIA[u]}
+                aria-pressed={unit === u}
+                onClick={() => onUnitChange(key, u)}
+              >
+                {configPage.unit[u]}
+              </button>
+            ))}
+          </div>
+        </div>
+        <p className="hint">{configPage.hintUnit[unit]}</p>
+        {errors[key] ? (
+          <span className="field-error">{errors[key]}</span>
         ) : null}
-      </label>
+      </div>
     );
   }
 
@@ -125,14 +258,12 @@ export function ConfigForm() {
           <section className="block">
             <h2 className="block-title">{configPage.durations}</h2>
             <p className="hint">{configPage.hint}</p>
-            {numField("focoSeconds", configPage.foco, "foco")}
-            {numField("pausaCurtaSeconds", configPage.pausaCurta, "pausaCurta")}
-            {numField(
-              "pausaLongaSeconds",
-              configPage.pausaLonga,
-              "pausaLonga",
-            )}
+            {durationField("foco")}
+            {durationField("pausaCurta")}
+            {durationField("pausaLonga")}
           </section>
+
+          <SpotifySection />
 
           <section className="block">
             <h2 className="block-title">{configPage.alerta}</h2>

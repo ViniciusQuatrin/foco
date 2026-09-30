@@ -2,27 +2,43 @@
 
 :root,
 [data-theme="light"] {
-  --bg: #f2f0e9;
+  --bg: #f4f1ea;
   --fg: #0a0a0a;
   --muted: #3a3a3a;
-  --accent: #e10600;
-  --accent-fg: #f2f0e9;
+  --accent: #ff003c;
+  --accent-2: #00e5ff;
+  --accent-3: #ffe600;
+  --accent-fg: #f4f1ea;
   --border: #0a0a0a;
   --surface: #ffffff;
+  --surface-2: #ece8df;
   --warn: #8a0000;
-  --focus: #e10600;
+  --focus: #ff003c;
+  --neon-glow: 0 0 8px rgba(255, 0, 60, 0.45), 0 0 18px rgba(0, 229, 255, 0.25);
+  --hud-scan: rgba(0, 0, 0, 0.04);
+  --glitch-a: #ff003c;
+  --glitch-b: #00e5ff;
+  --glitch-c: #ffe600;
 }
 
 [data-theme="dark"] {
-  --bg: #050505;
-  --fg: #f2f0e9;
-  --muted: #a8a8a0;
-  --accent: #00ff87;
-  --accent-fg: #050505;
-  --border: #f2f0e9;
-  --surface: #111111;
-  --warn: #ff6b6b;
-  --focus: #00ff87;
+  --bg: #05050a;
+  --fg: #e8fff6;
+  --muted: #7a9a8e;
+  --accent: #00ff9f;
+  --accent-2: #ff2a6d;
+  --accent-3: #05d9e8;
+  --accent-fg: #05050a;
+  --border: #00ff9f;
+  --surface: #0b1210;
+  --surface-2: #101a16;
+  --warn: #ff6b8a;
+  --focus: #00ff9f;
+  --neon-glow: 0 0 10px rgba(0, 255, 159, 0.55), 0 0 22px rgba(5, 217, 232, 0.3);
+  --hud-scan: rgba(0, 255, 159, 0.04);
+  --glitch-a: #ff2a6d;
+  --glitch-b: #05d9e8;
+  --glitch-c: #f9f002;
 }
 
 @theme inline {
@@ -43,7 +59,11 @@ html {
 body {
   margin: 0;
   min-height: 100dvh;
-  background: var(--bg);
+  background:
+    linear-gradient(180deg, var(--hud-scan) 1px, transparent 1px) 0 0 / 100% 4px,
+    radial-gradient(ellipse at 20% 0%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 50%),
+    radial-gradient(ellipse at 90% 10%, color-mix(in srgb, var(--accent-2) 10%, transparent), transparent 45%),
+    var(--bg);
   color: var(--fg);
   font-family: var(--font-display), system-ui, sans-serif;
   font-weight: 600;
@@ -59,6 +79,18 @@ body {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+
+  .time-glitch::before,
+  .time-glitch::after,
+  .timer-display.is-running::before {
+    content: none !important;
+    animation: none !important;
+    display: none !important;
+  }
+
+  .timer-display.is-running {
+    box-shadow: none;
   }
 }
 
@@ -119,6 +151,7 @@ body {
   margin-bottom: 0.75rem;
   padding-bottom: 0.5rem;
   border-bottom: 3px solid var(--border);
+  box-shadow: 0 3px 0 color-mix(in srgb, var(--accent-2) 40%, transparent);
 }
 
 .brand {
@@ -128,6 +161,7 @@ body {
   text-transform: uppercase;
   text-decoration: none;
   color: var(--fg);
+  text-shadow: 0 0 12px color-mix(in srgb, var(--accent) 50%, transparent);
 }
 
 .header-actions {
@@ -162,6 +196,8 @@ body {
   text-transform: uppercase;
   cursor: pointer;
   font-family: inherit;
+  box-shadow: var(--neon-glow);
+  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 0 100%);
 }
 
 .mode-label:disabled {
@@ -170,23 +206,137 @@ body {
 }
 
 .timer-display {
+  position: relative;
   border: 4px solid var(--border);
-  background: var(--surface);
+  background:
+    linear-gradient(90deg, transparent 49%, color-mix(in srgb, var(--accent) 18%, transparent) 50%, transparent 51%),
+    linear-gradient(0deg, transparent 49%, color-mix(in srgb, var(--accent-2) 12%, transparent) 50%, transparent 51%),
+    var(--surface);
+  background-size: 24px 24px, 24px 24px, auto;
   padding: 0.85rem 0.75rem 0.65rem;
   text-align: center;
+  overflow: hidden;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent-3) 35%, transparent);
+}
+
+.timer-display.is-running {
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--accent-3) 55%, transparent),
+    var(--neon-glow);
+}
+
+.timer-display.is-running::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    color-mix(in srgb, var(--accent) 8%, transparent) 50%,
+    transparent 100%
+  );
+  background-size: 100% 220%;
+  animation: hud-scan 2.8s linear infinite;
+  opacity: 0.7;
+}
+
+@keyframes hud-scan {
+  0% {
+    background-position: 0 -100%;
+  }
+  100% {
+    background-position: 0 200%;
+  }
 }
 
 .time {
+  position: relative;
+  z-index: 1;
   font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: clamp(3.25rem, 18vw, 4.5rem);
+  font-size: clamp(2.75rem, 16vw, 4.5rem);
   font-weight: 700;
   letter-spacing: -0.04em;
   line-height: 1;
-  tabular-nums: true;
   font-variant-numeric: tabular-nums;
+  color: var(--fg);
+}
+
+.time-glitch {
+  isolation: isolate;
+}
+
+.time-glitch::before,
+.time-glitch::after {
+  content: attr(data-text);
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  font: inherit;
+  letter-spacing: inherit;
+  line-height: inherit;
+  pointer-events: none;
+}
+
+.time-glitch::before {
+  color: var(--glitch-a);
+  animation: glitch-a 1.6s steps(2, end) infinite;
+  mix-blend-mode: screen;
+  opacity: 0.85;
+}
+
+.time-glitch::after {
+  color: var(--glitch-b);
+  animation: glitch-b 1.35s steps(2, end) infinite;
+  mix-blend-mode: screen;
+  opacity: 0.75;
+}
+
+@keyframes glitch-a {
+  0%,
+  88%,
+  100% {
+    transform: translate(0, 0);
+    clip-path: inset(0 0 0 0);
+  }
+  90% {
+    transform: translate(-3px, 1px);
+    clip-path: inset(12% 0 55% 0);
+  }
+  92% {
+    transform: translate(3px, -1px);
+    clip-path: inset(40% 0 20% 0);
+  }
+  94% {
+    transform: translate(-2px, 2px);
+    clip-path: inset(65% 0 8% 0);
+  }
+}
+
+@keyframes glitch-b {
+  0%,
+  86%,
+  100% {
+    transform: translate(0, 0);
+    clip-path: inset(0 0 0 0);
+  }
+  89% {
+    transform: translate(3px, -1px);
+    clip-path: inset(8% 0 60% 0);
+  }
+  91% {
+    transform: translate(-4px, 1px);
+    clip-path: inset(35% 0 25% 0);
+  }
+  93% {
+    transform: translate(2px, 2px);
+    clip-path: inset(70% 0 5% 0);
+  }
 }
 
 .timer-status {
+  position: relative;
+  z-index: 1;
   margin-top: 0.4rem;
   font-size: 0.8rem;
   font-weight: 700;
@@ -205,14 +355,20 @@ body {
   letter-spacing: 0.04em;
   text-transform: uppercase;
   font-size: 0.9rem;
+  box-shadow: var(--neon-glow);
 }
 
 .controls,
 .timer-nav,
-.theme-pills {
+.theme-pills,
+.unit-pills {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0.5rem;
+}
+
+.unit-pills {
+  grid-template-columns: repeat(3, 1fr);
 }
 
 .btn {
@@ -242,11 +398,18 @@ body {
 .btn-primary {
   background: var(--fg);
   color: var(--bg);
+  box-shadow: var(--neon-glow);
 }
 
 .btn-secondary {
   background: var(--surface);
   color: var(--fg);
+}
+
+.btn-accent {
+  background: var(--accent);
+  color: var(--accent-fg);
+  box-shadow: var(--neon-glow);
 }
 
 .btn-ghost {
@@ -256,6 +419,13 @@ body {
   text-underline-offset: 3px;
   padding-left: 0.25rem;
   padding-right: 0.25rem;
+  box-shadow: none;
+}
+
+.btn-unit {
+  padding: 0.45rem 0.35rem;
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
 }
 
 .touch {
@@ -268,6 +438,18 @@ body {
   display: flex;
   flex-direction: column;
   gap: 0.3rem;
+}
+
+.duration-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.duration-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.4rem;
 }
 
 .field-label {
@@ -314,6 +496,7 @@ body {
   letter-spacing: 0.08em;
   text-transform: uppercase;
   line-height: 1;
+  text-shadow: 0 0 10px color-mix(in srgb, var(--accent) 40%, transparent);
 }
 
 .block {
@@ -323,6 +506,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 0.55rem;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent-2) 25%, transparent);
 }
 
 .block-title {
@@ -330,6 +514,7 @@ body {
   font-size: 0.8rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
+  color: var(--accent);
 }
 
 .hint {
@@ -360,6 +545,7 @@ body {
 .toggle-row input {
   width: 1.25rem;
   height: 1.25rem;
+  min-width: 1.25rem;
   accent-color: var(--accent);
 }
 
@@ -419,4 +605,30 @@ body {
   display: flex;
   flex-direction: column;
   gap: 0.65rem;
+}
+
+.spotify-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.spotify-status-text {
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.spotify-status-text.is-connected {
+  color: var(--accent);
+}
+
+.spotify-status-text.is-error {
+  color: var(--warn);
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 700;
 }

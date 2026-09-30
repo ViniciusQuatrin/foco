@@ -23,6 +23,7 @@ import {
 } from "@/lib/storage";
 import { playEndBeep } from "@/lib/sound";
 import { notifyCycleEnd } from "@/lib/notifications";
+import { pauseSpotifyIfNeeded } from "@/lib/spotify";
 import { HistoryItem, Mode, TimerStatus } from "@/lib/types";
 import { useTheme } from "./ThemeProvider";
 import { AppHeader } from "./AppHeader";
@@ -110,6 +111,10 @@ export function Timer() {
     if (cfg.soundEnabled) playEndBeep();
     if (cfg.notificationEnabled) notifyCycleEnd(doneMode);
 
+    if (doneMode === "foco") {
+      void pauseSpotifyIfNeeded();
+    }
+
     const nxt = nextMode(doneMode);
     setMode(nxt);
     setTimerStatus("parado");
@@ -190,7 +195,7 @@ export function Timer() {
     endAtRef.current = null;
     const order: Mode[] = ["foco", "pausa_curta", "pausa_longa"];
     const idx = order.indexOf(modeRef.current);
-    const nxt = order[(idx + 1) % order.length];
+    const nxt = order[(idx + 1) % order.length]!;
     setMode(nxt);
     const dur = durationForMode(nxt, configRef.current);
     setRemaining(dur);
@@ -202,6 +207,7 @@ export function Timer() {
 
   const isRunning = timerStatus === "rodando";
   const canCycleMode = timerStatus !== "rodando";
+  const timeText = formatMMSS(remaining);
 
   return (
     <div className="page page-timer">
@@ -217,9 +223,16 @@ export function Timer() {
           {modes[mode]}
         </button>
 
-        <div className="timer-display" aria-hidden={false}>
-          <div className="time" aria-label={formatMMSS(remaining)}>
-            {formatMMSS(remaining)}
+        <div
+          className={`timer-display${isRunning ? " is-running" : ""}`}
+          aria-hidden={false}
+        >
+          <div
+            className={`time${isRunning ? " time-glitch" : ""}`}
+            data-text={timeText}
+            aria-label={timeText}
+          >
+            {timeText}
           </div>
           <div className="timer-status">{statusCopy[timerStatus]}</div>
         </div>

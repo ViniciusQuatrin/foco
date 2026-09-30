@@ -18,6 +18,10 @@ export const a11y = {
   play: "Iniciar timer",
   pause: "Pausar timer",
   reset: "Zerar timer",
+  unitSeconds: "Segundos",
+  unitMinutes: "Minutos",
+  unitHours: "Horas",
+  spotifyPauseToggle: "Pausar Spotify ao fim do foco",
 } as const;
 
 export const modes = {
@@ -70,8 +74,21 @@ export const configPage = {
   foco: "Foco",
   pausaCurta: "Pausa curta",
   pausaLonga: "Pausa longa",
+  /** @deprecated v1 suffix — kept for reference; v2 uses unit selector */
   suffix: "s",
-  hint: "Valor em segundos.",
+  hint: "Padrão: minutos. Interno: segundos.",
+  hintUnit: {
+    s: "Em segundos.",
+    min: "Em minutos.",
+    h: "Em horas.",
+  },
+  unit: {
+    s: "s",
+    min: "min",
+    h: "h",
+  },
+  valuePlaceholder: "0",
+  missingValue: "Informa um valor.",
   alerta: "ALERTA",
   sound: "Som ao fim",
   notif: "Notificação ao fim",
@@ -83,6 +100,17 @@ export const configPage = {
   defaultNamePlaceholder: "sem nome",
   invalidDuration: "Precisa ser um número maior que zero.",
   saved: "Config salva.",
+  spotify: "SPOTIFY",
+  spotifyConnect: "Conectar Spotify",
+  spotifyDisconnect: "Desconectar",
+  spotifyConnecting: "Conectando…",
+  spotifyConnected: "Conectado",
+  spotifyDisconnected: "Desconectado",
+  spotifyPauseToggle: "Pausar música quando o foco acabar",
+  spotifyErrorGeneric: "Spotify não conectou. Tenta de novo.",
+  spotifyErrorCancelled: "Conexão cancelada.",
+  spotifyErrorSession: "Sessão Spotify expirou. Conecta de novo.",
+  spotifyErrorUnavailable: "Spotify fora do ar. Tenta mais tarde.",
 } as const;
 
 export const historicoPage = {

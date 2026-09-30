@@ -1,8 +1,15 @@
 import { Mode } from "./types";
 import { feedback, modesShort, session } from "@/content/copy";
 
+/** MM:SS, or HH:MM:SS when total ≥ 3600. */
 export function formatMMSS(totalSeconds: number): string {
   const s = Math.max(0, Math.floor(totalSeconds));
+  if (s >= 3600) {
+    const h = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    const r = s % 60;
+    return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(r).padStart(2, "0")}`;
+  }
   const m = Math.floor(s / 60);
   const r = s % 60;
   return `${String(m).padStart(2, "0")}:${String(r).padStart(2, "0")}`;
@@ -11,6 +18,14 @@ export function formatMMSS(totalSeconds: number): string {
 export function formatDurationShort(seconds: number): string {
   const s = Math.max(0, Math.floor(seconds));
   if (s < 60) return `${s}s`;
+  if (s >= 3600) {
+    const h = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    const r = s % 60;
+    if (m === 0 && r === 0) return `${h}h`;
+    if (r === 0) return `${h}h ${m}min`;
+    return `${h}h ${m}min ${r}s`;
+  }
   const m = Math.floor(s / 60);
   const r = s % 60;
   return r === 0 ? `${m}min` : `${m}min ${r}s`;
