@@ -249,88 +249,92 @@ export function ConfigForm() {
   const notifBlocked = notifPerm === "denied" || notifPerm === "unsupported";
 
   return (
-    <div className="page">
+    <div className="page page-config">
       <AppHeader />
       <main className="page-body">
         <h1 className="page-title">{configPage.title}</h1>
 
         <form className="config-form" onSubmit={onSubmit} noValidate>
-          <section className="block">
-            <h2 className="block-title">{configPage.durations}</h2>
-            <p className="hint">{configPage.hint}</p>
-            {durationField("foco")}
-            {durationField("pausaCurta")}
-            {durationField("pausaLonga")}
-          </section>
+          <div className="config-col config-col-durations">
+            <section className="block">
+              <h2 className="block-title">{configPage.durations}</h2>
+              <p className="hint">{configPage.hint}</p>
+              {durationField("foco")}
+              {durationField("pausaCurta")}
+              {durationField("pausaLonga")}
+            </section>
+          </div>
 
-          <SpotifySection />
+          <div className="config-col config-col-side">
+            <SpotifySection />
 
-          <section className="block">
-            <h2 className="block-title">{configPage.alerta}</h2>
-            <label className="toggle-row touch">
-              <span>{configPage.sound}</span>
-              <input
-                type="checkbox"
-                checked={draft.soundEnabled}
-                onChange={(e) => void onToggleSound(e.target.checked)}
-              />
-            </label>
-            <label className="toggle-row touch">
-              <span>{configPage.notif}</span>
-              <input
-                type="checkbox"
-                checked={draft.notificationEnabled}
-                disabled={notifBlocked && !draft.notificationEnabled}
-                onChange={(e) => void onToggleNotif(e.target.checked)}
-              />
-            </label>
-            {notifBlocked ? (
-              <p className="hint warn">{configPage.notifBlocked}</p>
-            ) : null}
-          </section>
+            <section className="block">
+              <h2 className="block-title">{configPage.alerta}</h2>
+              <label className="toggle-row touch">
+                <span>{configPage.sound}</span>
+                <input
+                  type="checkbox"
+                  checked={draft.soundEnabled}
+                  onChange={(e) => void onToggleSound(e.target.checked)}
+                />
+              </label>
+              <label className="toggle-row touch">
+                <span>{configPage.notif}</span>
+                <input
+                  type="checkbox"
+                  checked={draft.notificationEnabled}
+                  disabled={notifBlocked && !draft.notificationEnabled}
+                  onChange={(e) => void onToggleNotif(e.target.checked)}
+                />
+              </label>
+              {notifBlocked ? (
+                <p className="hint warn">{configPage.notifBlocked}</p>
+              ) : null}
+            </section>
 
-          <section className="block">
-            <h2 className="block-title">{configPage.tema}</h2>
-            <div className="theme-pills">
-              <button
-                type="button"
-                className={`btn touch ${draft.theme === "light" ? "btn-primary" : "btn-secondary"}`}
-                onClick={() => onTheme("light")}
-                aria-pressed={draft.theme === "light"}
-              >
-                {configPage.claro}
-              </button>
-              <button
-                type="button"
-                className={`btn touch ${draft.theme === "dark" ? "btn-primary" : "btn-secondary"}`}
-                onClick={() => onTheme("dark")}
-                aria-pressed={draft.theme === "dark"}
-              >
-                {configPage.escuro}
-              </button>
-            </div>
-          </section>
+            <section className="block">
+              <h2 className="block-title">{configPage.tema}</h2>
+              <div className="theme-pills">
+                <button
+                  type="button"
+                  className={`btn touch ${draft.theme === "light" ? "btn-primary" : "btn-secondary"}`}
+                  onClick={() => onTheme("light")}
+                  aria-pressed={draft.theme === "light"}
+                >
+                  {configPage.claro}
+                </button>
+                <button
+                  type="button"
+                  className={`btn touch ${draft.theme === "dark" ? "btn-primary" : "btn-secondary"}`}
+                  onClick={() => onTheme("dark")}
+                  aria-pressed={draft.theme === "dark"}
+                >
+                  {configPage.escuro}
+                </button>
+              </div>
+            </section>
 
-          <section className="block">
-            <label className="field">
-              <span className="field-label">{configPage.defaultName}</span>
-              <input
-                type="text"
-                className="input"
-                value={draft.defaultSessionName}
-                placeholder={configPage.defaultNamePlaceholder}
-                maxLength={80}
-                onChange={(e) =>
-                  setDraft({ ...draft, defaultSessionName: e.target.value })
-                }
-                onBlur={() => persist(draft)}
-              />
-            </label>
-          </section>
+            <section className="block">
+              <label className="field">
+                <span className="field-label">{configPage.defaultName}</span>
+                <input
+                  type="text"
+                  className="input"
+                  value={draft.defaultSessionName}
+                  placeholder={configPage.defaultNamePlaceholder}
+                  maxLength={80}
+                  onChange={(e) =>
+                    setDraft({ ...draft, defaultSessionName: e.target.value })
+                  }
+                  onBlur={() => persist(draft)}
+                />
+              </label>
+            </section>
 
-          <button type="submit" className="sr-only" tabIndex={-1}>
-            {configPage.title}
-          </button>
+            <button type="submit" className="sr-only" tabIndex={-1}>
+              {configPage.title}
+            </button>
+          </div>
         </form>
 
         {toast ? (

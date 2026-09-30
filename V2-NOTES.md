@@ -44,3 +44,8 @@ Redirect used by the app: `${window.location.origin}/config` (matches Next expor
 1. **Visual + reduced-motion** — Open `/`, start timer: neon + glitch on display. Enable OS “reduce motion”: glitch/scan stop.
 2. **Units** — `/config`: change foco to `1` + `min` → timer shows `01:00`. Switch unit to `s` → display `60`. Set `1` + `h` → timer `01:00:00`. Clear localStorage → new user defaults in minutes.
 3. **Spotify** — Set `NEXT_PUBLIC_SPOTIFY_CLIENT_ID`, register redirect URI, Conectar Spotify, enable pause toggle, run a short foco cycle with Spotify playing → music pauses at end.
+
+## UX addendum (post-v2)
+
+1. **/config desktop layout** — From `min-width: 1024px`, wider page (`max-width: 58rem`) and 2-column grid: left = DURAÇÕES, right = Spotify + alerta/tema/nome. Mobile stays compact single column.
+2. **Shell border glitch** — Colorful glitch extended to neon HUD frame edges on `.page` (app shell), not only the clock. Default ON; fully quiet under `prefers-reduced-motion: reduce` (no glitch on borders or clock).
