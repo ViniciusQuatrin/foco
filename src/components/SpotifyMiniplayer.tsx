@@ -17,6 +17,8 @@ const POLL_MS = 5000;
 function labelForSnapshot(snap: SpotifyPlaybackSnapshot): string {
   if (snap.kind === "idle") return spotifyMini.idle;
   if (snap.kind === "error") return spotifyMini.failed;
+  // Paused / not actively playing → idle label (QA + copy: NADA TOCANDO)
+  if (!snap.isPlaying) return spotifyMini.idle;
   const track = snap.trackName.trim();
   const artist = snap.artistName.trim();
   if (track && artist) return `${track} · ${artist}`;
@@ -84,6 +86,12 @@ export function SpotifyMiniplayer() {
         setActionError(controlErrorMessage(result));
         if (result.reason === "auth") setVisible(false);
       } else {
+        // After pause, flip to idle label immediately; poll confirms
+        setSnap((prev) =>
+          prev.kind === "track" && prev.isPlaying
+            ? { ...prev, isPlaying: false }
+            : prev,
+        );
         await refresh();
       }
     } finally {
