@@ -6,9 +6,12 @@ import {
   DEFAULT_CONFIG,
   DurationUnit,
   HistoryItem,
+  Mode,
   SpotifyTokens,
   STORAGE_KEYS,
   Theme,
+  TimerSession,
+  TimerStatus,
 } from "./types";
 
 function safeParse<T>(raw: string | null, fallback: T): T {
@@ -176,4 +179,59 @@ export function saveSpotifyPauseOnFocusEnd(value: boolean): void {
     STORAGE_KEYS.spotifyPauseOnFocusEnd,
     value ? "true" : "false",
   );
+}
+
+/* —— Timer session (SPA navigation) —— */
+
+function isMode(v: unknown): v is Mode {
+  return v === "foco" || v === "pausa_curta" || v === "pausa_longa";
+}
+
+function isTimerStatus(v: unknown): v is TimerStatus {
+  return v === "parado" || v === "rodando" || v === "pausado";
+}
+
+export function loadTimerSession(): TimerSession | null {
+  if (typeof window === "undefined") return null;
+  const parsed = safeParse<Partial<TimerSession> | null>(
+    sessionStorage.getItem(STORAGE_KEYS.timerSession),
+    null,
+  );
+  if (
+    !parsed ||
+    !isMode(parsed.mode) ||
+    !isTimerStatus(parsed.status) ||
+    typeof parsed.remainingSeconds !== "number" ||
+    !(parsed.endAt === null || typeof parsed.endAt === "number")
+  ) {
+    return null;
+  }
+  if (parsed.status === "rodando") {
+    if (typeof parsed.endAt !== "number") return null;
+    return {
+      mode: parsed.mode,
+      status: "rodando",
+      remainingSeconds: Math.max(0, parsed.remainingSeconds),
+      endAt: parsed.endAt,
+    };
+  }
+  if (parsed.status === "pausado") {
+    return {
+      mode: parsed.mode,
+      status: "pausado",
+      remainingSeconds: Math.max(0, parsed.remainingSeconds),
+      endAt: null,
+    };
+  }
+  return null;
+}
+
+export function saveTimerSession(session: TimerSession): void {
+  if (typeof window === "undefined") return;
+  sessionStorage.setItem(STORAGE_KEYS.timerSession, JSON.stringify(session));
+}
+
+export function clearTimerSession(): void {
+  if (typeof window === "undefined") return;
+  sessionStorage.removeItem(STORAGE_KEYS.timerSession);
 }

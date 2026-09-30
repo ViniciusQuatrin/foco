@@ -32,6 +32,15 @@ export interface SpotifyTokens {
   expiresAt: number;
 }
 
+/** Active timer across SPA navigations (sessionStorage). */
+export interface TimerSession {
+  mode: Mode;
+  status: TimerStatus;
+  remainingSeconds: number;
+  /** Wall-clock deadline (ms) while status === "rodando". */
+  endAt: number | null;
+}
+
 /** Brand-new users: units default to minutes; values still stored as seconds. */
 export const DEFAULT_CONFIG: AppConfig = {
   configVersion: 2,
@@ -55,6 +64,7 @@ export const STORAGE_KEYS = {
   spotifyTokens: "foco:spotify:tokens",
   spotifyPauseOnFocusEnd: "foco:spotify:pauseOnFocusEnd",
   spotifyPkce: "foco:spotify:pkce",
+  timerSession: "foco:timerSession",
 } as const;
 
 export const CONFIG_VERSION = 2;

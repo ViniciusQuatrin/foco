@@ -18,8 +18,11 @@ import {
 } from "@/lib/format";
 import {
   addHistoryItem,
+  clearTimerSession,
   loadSessionName,
+  loadTimerSession,
   saveSessionName,
+  saveTimerSession,
 } from "@/lib/storage";
 import { playEndBeep } from "@/lib/sound";
 import { notifyCycleEnd } from "@/lib/notifications";
@@ -38,6 +41,7 @@ export function Timer() {
   const [sessionName, setSessionName] = useState("");
   const [endMsg, setEndMsg] = useState("");
   const [liveMsg, setLiveMsg] = useState("");
+  const [hydrated, setHydrated] = useState(false);
 
   const statusRef = useRef(timerStatus);
   const remainingRef = useRef(remaining);
@@ -53,13 +57,13 @@ export function Timer() {
   configRef.current = config;
   sessionNameRef.current = sessionName;
 
-  // Sync duration when config/mode changes while stopped
+  // Sync duration when config/mode changes while stopped (after hydrate)
   useEffect(() => {
-    if (!ready) return;
+    if (!ready || !hydrated) return;
     if (timerStatus === "parado") {
       setRemaining(durationForMode(mode, config));
     }
-  }, [config, mode, ready, timerStatus]);
+  }, [config, mode, ready, timerStatus, hydrated]);
 
   // Restore the current session name, falling back to the configured default.
   useEffect(() => {
@@ -74,6 +78,58 @@ export function Timer() {
       saveSessionName(config.defaultSessionName);
     }
   }, [ready, config.defaultSessionName]);
+
+  // Restore active timer across SPA navigations (e.g. / → /config → /)
+  useEffect(() => {
+    if (!ready || hydrated) return;
+
+    const session = loadTimerSession();
+    if (session) {
+      setMode(session.mode);
+      modeRef.current = session.mode;
+
+      if (session.status === "rodando" && typeof session.endAt === "number") {
+        const left = Math.max(
+          0,
+          Math.ceil((session.endAt - Date.now()) / 1000),
+        );
+        endAtRef.current = session.endAt;
+        setRemaining(left);
+        remainingRef.current = left;
+        setTimerStatus("rodando");
+        statusRef.current = "rodando";
+        setHydrated(true);
+        return;
+      }
+
+      if (session.status === "pausado") {
+        endAtRef.current = null;
+        setRemaining(session.remainingSeconds);
+        remainingRef.current = session.remainingSeconds;
+        setTimerStatus("pausado");
+        statusRef.current = "pausado";
+        setHydrated(true);
+        return;
+      }
+    }
+
+    setHydrated(true);
+  }, [ready, hydrated]);
+
+  // Persist running/paused session; clear when stopped/reset/complete
+  useEffect(() => {
+    if (!hydrated) return;
+    if (timerStatus === "rodando" || timerStatus === "pausado") {
+      saveTimerSession({
+        mode,
+        status: timerStatus,
+        remainingSeconds: remaining,
+        endAt: timerStatus === "rodando" ? endAtRef.current : null,
+      });
+    } else {
+      clearTimerSession();
+    }
+  }, [hydrated, mode, timerStatus, remaining]);
 
   const announce = useCallback((msg: string) => {
     setLiveMsg("");
@@ -91,6 +147,7 @@ export function Timer() {
   const completeCycle = useCallback(() => {
     clearTick();
     endAtRef.current = null;
+    clearTimerSession();
 
     const doneMode = modeRef.current;
     const cfg = configRef.current;
@@ -134,6 +191,14 @@ export function Timer() {
     rafRef.current = requestAnimationFrame(tick);
   }, [completeCycle]);
 
+  // Resume wall-clock tick after hydrating a running session
+  useEffect(() => {
+    if (!hydrated) return;
+    if (statusRef.current !== "rodando" || endAtRef.current == null) return;
+    if (rafRef.current != null) return;
+    rafRef.current = requestAnimationFrame(tick);
+  }, [hydrated, tick]);
+
   const start = useCallback(() => {
     const left = remainingRef.current;
     if (left <= 0) return;
@@ -160,6 +225,7 @@ export function Timer() {
   const reset = useCallback(() => {
     clearTick();
     endAtRef.current = null;
+    clearTimerSession();
     const dur = durationForMode(modeRef.current, configRef.current);
     setRemaining(dur);
     remainingRef.current = dur;
