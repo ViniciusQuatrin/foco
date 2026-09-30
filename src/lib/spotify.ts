@@ -351,10 +351,6 @@ export async function fetchSpotifyPlayback(): Promise<SpotifyPlaybackSnapshot> {
     if (!item || typeof item.name !== "string" || !item.name) {
       return { kind: "idle" };
     }
-    // Paused / not actively playing → idle (label NADA TOCANDO; no stale track line)
-    if (!data.is_playing) {
-      return { kind: "idle" };
-    }
     const artists = Array.isArray(item.artists)
       ? item.artists
           .map((a) => a?.name)
@@ -362,7 +358,7 @@ export async function fetchSpotifyPlayback(): Promise<SpotifyPlaybackSnapshot> {
       : [];
     return {
       kind: "track",
-      isPlaying: true,
+      isPlaying: Boolean(data.is_playing),
       trackName: item.name,
       artistName: artists.join(", "),
     };

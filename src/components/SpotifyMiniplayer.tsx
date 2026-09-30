@@ -13,20 +13,22 @@ import {
 } from "@/lib/spotify";
 
 const POLL_MS = 5000;
-/** Spotify player state lags pause; ignore "playing" polls briefly after local pause. */
+/** Spotify player state lags pause; ignore stale is_playing=true briefly. */
 const PAUSE_HOLD_MS = 2500;
 
-function labelForSnapshot(snap: SpotifyPlaybackSnapshot): string {
-  if (snap.kind !== "track") {
-    if (snap.kind === "error") return spotifyMini.failed;
-    return spotifyMini.idle;
-  }
-  if (!snap.isPlaying) return spotifyMini.idle;
-  const track = snap.trackName.trim();
-  const artist = snap.artistName.trim();
+function trackLabel(trackName: string, artistName: string): string {
+  const track = trackName.trim();
+  const artist = artistName.trim();
   if (track && artist) return `${track} · ${artist}`;
   if (track) return track;
   return spotifyMini.playingFallback;
+}
+
+function labelForSnapshot(snap: SpotifyPlaybackSnapshot): string {
+  if (snap.kind === "error") return spotifyMini.failed;
+  if (snap.kind === "idle") return spotifyMini.idle;
+  // Playing or paused with a track → show title (paused stays muted via is-idle CSS)
+  return trackLabel(snap.trackName, snap.artistName);
 }
 
 function controlErrorMessage(result: SpotifyControlResult): string {
@@ -56,13 +58,9 @@ export function SpotifyMiniplayer() {
       return;
     }
     const holdingPause = Date.now() < ignorePlayingUntilRef.current;
-    if (
-      holdingPause &&
-      next.kind === "track" &&
-      next.isPlaying
-    ) {
-      // Stale "still playing" right after PAUSAR — keep idle label
-      setSnap({ kind: "idle" });
+    if (holdingPause && next.kind === "track" && next.isPlaying) {
+      // Stale "still playing" after PAUSAR — keep paused track label
+      setSnap({ ...next, isPlaying: false });
       return;
     }
     setSnap(next);
@@ -104,7 +102,9 @@ export function SpotifyMiniplayer() {
       }
       if (mode === "pause") {
         ignorePlayingUntilRef.current = Date.now() + PAUSE_HOLD_MS;
-        setSnap({ kind: "idle" });
+        setSnap((prev) =>
+          prev.kind === "track" ? { ...prev, isPlaying: false } : prev,
+        );
         window.setTimeout(() => {
           if (mountedRef.current) void refresh();
         }, PAUSE_HOLD_MS);
@@ -135,7 +135,9 @@ export function SpotifyMiniplayer() {
     <aside
       className="spotify-mini"
       aria-label="Spotify"
-      data-state={isPlaying ? "playing" : snap.kind === "error" ? "error" : "idle"}
+      data-state={
+        isPlaying ? "playing" : snap.kind === "error" ? "error" : "idle"
+      }
     >
       <div className={`spotify-mini-meta ${statusClass}`} role="status">
         <span className="spotify-mini-label" key={label}>

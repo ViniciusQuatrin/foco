@@ -200,8 +200,9 @@ Tom cyber, curto. Sem playlists/volume.
 ## Miniplayer (Timer / chrome quando Spotify conectado)
 
 ### Estados
-- Nada tocando: `NADA TOCANDO`
-- Tocando: mostra `{faixa}` · `{artista}` (se API der; senão `TOCANDO`)
+- Nada tocando (sem faixa / sem contexto): `NADA TOCANDO`
+- Tocando: `{faixa}` · `{artista}` (se API der; senão `TOCANDO`) — cor accent
+- Pausado (com faixa): `{faixa}` · `{artista}` em cinza (mesmo texto; estilo idle)
 - Erro: `SPOTIFY FALHOU`
 
 ### Ações
