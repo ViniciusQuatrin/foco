@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
   a11y,
@@ -27,11 +27,28 @@ import {
 import { playEndBeep } from "@/lib/sound";
 import { notifyCycleEnd } from "@/lib/notifications";
 import { pauseSpotifyIfNeeded } from "@/lib/spotify";
-import { HistoryItem, Mode, TimerStatus } from "@/lib/types";
+import { HistoryItem, Mode, TimerSession, TimerStatus } from "@/lib/types";
 import { useTheme } from "./ThemeProvider";
 import { AppHeader } from "./AppHeader";
 import { LiveRegion } from "./LiveRegion";
 import { SpotifyMiniplayer } from "./SpotifyMiniplayer";
+
+function persistActive(
+  mode: Mode,
+  status: TimerStatus,
+  remainingSeconds: number,
+  endAt: number | null,
+) {
+  if (status !== "rodando" && status !== "pausado") return;
+  const session: TimerSession = {
+    mode,
+    status,
+    remainingSeconds,
+    endAt: status === "rodando" ? endAt : null,
+  };
+  if (status === "rodando" && typeof session.endAt !== "number") return;
+  saveTimerSession(session);
+}
 
 export function Timer() {
   const { config, ready } = useTheme();
@@ -50,6 +67,7 @@ export function Timer() {
   const sessionNameRef = useRef(sessionName);
   const endAtRef = useRef<number | null>(null);
   const rafRef = useRef<number | null>(null);
+  const hydratedRef = useRef(false);
 
   statusRef.current = timerStatus;
   remainingRef.current = remaining;
@@ -79,9 +97,10 @@ export function Timer() {
     }
   }, [ready, config.defaultSessionName]);
 
-  // Restore active timer across SPA navigations (e.g. / → /config → /)
-  useEffect(() => {
-    if (!ready || hydrated) return;
+  // Restore active timer BEFORE paint so Config→back never flashes full duration PARADO.
+  useLayoutEffect(() => {
+    if (!ready || hydratedRef.current) return;
+    hydratedRef.current = true;
 
     const session = loadTimerSession();
     if (session) {
@@ -96,8 +115,17 @@ export function Timer() {
         endAtRef.current = session.endAt;
         setRemaining(left);
         remainingRef.current = left;
+        if (left <= 0) {
+          // Expired while away — fall through to parado defaults after marking hydrated;
+          // completeCycle needs callbacks that exist after first render, so defer via status.
+          setTimerStatus("rodando");
+          statusRef.current = "rodando";
+          setHydrated(true);
+          return;
+        }
         setTimerStatus("rodando");
         statusRef.current = "rodando";
+        persistActive(session.mode, "rodando", left, session.endAt);
         setHydrated(true);
         return;
       }
@@ -108,28 +136,47 @@ export function Timer() {
         remainingRef.current = session.remainingSeconds;
         setTimerStatus("pausado");
         statusRef.current = "pausado";
+        persistActive(
+          session.mode,
+          "pausado",
+          session.remainingSeconds,
+          null,
+        );
         setHydrated(true);
         return;
       }
     }
 
     setHydrated(true);
-  }, [ready, hydrated]);
+  }, [ready]);
 
-  // Persist running/paused session; clear when stopped/reset/complete
+  // Backup persist on state changes; never clear here (only ZERAR / complete / mode cycle).
   useEffect(() => {
     if (!hydrated) return;
-    if (timerStatus === "rodando" || timerStatus === "pausado") {
-      saveTimerSession({
-        mode,
-        status: timerStatus,
-        remainingSeconds: remaining,
-        endAt: timerStatus === "rodando" ? endAtRef.current : null,
-      });
-    } else {
-      clearTimerSession();
-    }
+    persistActive(mode, timerStatus, remaining, endAtRef.current);
   }, [hydrated, mode, timerStatus, remaining]);
+
+  // Flush wall-clock session on unmount / tab hide so SPA remounts always hydrate.
+  useEffect(() => {
+    const flush = () => {
+      persistActive(
+        modeRef.current,
+        statusRef.current,
+        remainingRef.current,
+        endAtRef.current,
+      );
+    };
+    const onHide = () => {
+      if (document.visibilityState === "hidden") flush();
+    };
+    window.addEventListener("pagehide", flush);
+    document.addEventListener("visibilitychange", onHide);
+    return () => {
+      flush();
+      window.removeEventListener("pagehide", flush);
+      document.removeEventListener("visibilitychange", onHide);
+    };
+  }, []);
 
   const announce = useCallback((msg: string) => {
     setLiveMsg("");
@@ -182,8 +229,11 @@ export function Timer() {
   const tick = useCallback(() => {
     if (statusRef.current !== "rodando" || endAtRef.current == null) return;
     const left = Math.max(0, Math.ceil((endAtRef.current - Date.now()) / 1000));
-    setRemaining(left);
-    remainingRef.current = left;
+    if (left !== remainingRef.current) {
+      setRemaining(left);
+      remainingRef.current = left;
+      persistActive(modeRef.current, "rodando", left, endAtRef.current);
+    }
     if (left <= 0) {
       completeCycle();
       return;
@@ -195,15 +245,22 @@ export function Timer() {
   useEffect(() => {
     if (!hydrated) return;
     if (statusRef.current !== "rodando" || endAtRef.current == null) return;
+    if (remainingRef.current <= 0) {
+      completeCycle();
+      return;
+    }
     if (rafRef.current != null) return;
     rafRef.current = requestAnimationFrame(tick);
-  }, [hydrated, tick]);
+  }, [hydrated, tick, completeCycle]);
 
   const start = useCallback(() => {
     const left = remainingRef.current;
     if (left <= 0) return;
-    endAtRef.current = Date.now() + left * 1000;
+    const endAt = Date.now() + left * 1000;
+    endAtRef.current = endAt;
     setTimerStatus("rodando");
+    statusRef.current = "rodando";
+    persistActive(modeRef.current, "rodando", left, endAt);
     setEndMsg("");
     announce(`${modes[modeRef.current]}. ${statusCopy.rodando}`);
     clearTick();
@@ -211,14 +268,17 @@ export function Timer() {
   }, [announce, clearTick, tick]);
 
   const pause = useCallback(() => {
+    let left = remainingRef.current;
     if (endAtRef.current != null) {
-      const left = Math.max(0, Math.ceil((endAtRef.current - Date.now()) / 1000));
+      left = Math.max(0, Math.ceil((endAtRef.current - Date.now()) / 1000));
       setRemaining(left);
       remainingRef.current = left;
     }
     endAtRef.current = null;
     clearTick();
     setTimerStatus("pausado");
+    statusRef.current = "pausado";
+    persistActive(modeRef.current, "pausado", left, null);
     announce(`${modes[modeRef.current]}. ${statusCopy.pausado}`);
   }, [announce, clearTick]);
 
@@ -230,6 +290,7 @@ export function Timer() {
     setRemaining(dur);
     remainingRef.current = dur;
     setTimerStatus("parado");
+    statusRef.current = "parado";
     setEndMsg("");
     announce(`${modes[modeRef.current]}. ${statusCopy.parado}`);
   }, [announce, clearTick]);
@@ -249,6 +310,8 @@ export function Timer() {
           Math.ceil((endAtRef.current - Date.now()) / 1000),
         );
         setRemaining(left);
+        remainingRef.current = left;
+        persistActive(modeRef.current, "rodando", left, endAtRef.current);
         if (left <= 0) completeCycle();
       }
     };
@@ -260,6 +323,7 @@ export function Timer() {
     if (statusRef.current === "rodando") return;
     clearTick();
     endAtRef.current = null;
+    clearTimerSession();
     const order: Mode[] = ["foco", "pausa_curta", "pausa_longa"];
     const idx = order.indexOf(modeRef.current);
     const nxt = order[(idx + 1) % order.length]!;
@@ -268,6 +332,7 @@ export function Timer() {
     setRemaining(dur);
     remainingRef.current = dur;
     setTimerStatus("parado");
+    statusRef.current = "parado";
     setEndMsg("");
     announce(`${modes[nxt]}. ${statusCopy.parado}`);
   }, [announce, clearTick]);
