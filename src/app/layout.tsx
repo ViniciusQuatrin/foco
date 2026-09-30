@@ -42,6 +42,7 @@ export default function RootLayout({
   return (
     <html lang="pt-BR" suppressHydrationWarning>
       <head>
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
         <script dangerouslySetInnerHTML={{ __html: themeBoot }} />
       </head>
       <body className={`${display.variable} ${mono.variable}`}>

@@ -10,9 +10,10 @@ export function AppHeader({ showEnter = true }: { showEnter?: boolean }) {
       <Link href="/" className="brand" aria-label={product.name}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/brand/logo-80.png"
-          width={36}
-          height={36}
+          src="/brand/logo-40.png"
+          srcSet="/brand/logo-40.png 1x, /brand/logo-80.png 2x"
+          width={40}
+          height={40}
           className="brand-mark"
           alt=""
           decoding="async"
