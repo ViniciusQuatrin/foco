@@ -18,7 +18,8 @@ export function HistoryList() {
   }, []);
 
   return (
-    <div className="page">
+    <div className="center-shell">
+      <div className="page page-centered page-historico">
       <AppHeader />
       <main className="page-body">
         <h1 className="page-title">{historicoPage.title}</h1>
@@ -43,6 +44,7 @@ export function HistoryList() {
           {nav.backTimer}
         </Link>
       </main>
+      </div>
     </div>
   );
 }

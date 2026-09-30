@@ -54,3 +54,5 @@ Redirect used by the app: `${window.location.origin}/config` (matches Next expor
 5. **Miniplayer paused label (produto)** — Pausado com faixa: `{faixa} · {artista}` em cinza; `NADA TOCANDO` só sem track. Hold 2.5s pós-PAUSAR ainda evita poll `is_playing` stale.
 
 6. **Logo marca** — Asset glitch F (B&W+RGB) em `/public/brand/`; header ícone+nome (mobile prioriza ícone); favicon/apple/PWA; `/entrar` logo 128px. Sem animação em loop.
+
+7. **Center entrar/historico** — Same viewport shell as timer (`center-shell` + `page-centered`): H+V safe center, min-height 100dvh, breathing padding; long historico still scrolls.

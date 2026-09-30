@@ -228,9 +228,10 @@ body {
   }
 }
 
-/* Timer only: center HUD card in the viewport (mobile-first).
+/* Center HUD card in the viewport (mobile-first): timer, entrar, historico.
    min-height + flex + padding — not fixed 100vh — so short screens still scroll. */
-.timer-shell {
+.timer-shell,
+.center-shell {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -241,7 +242,8 @@ body {
   padding: 1.75rem 0.75rem 1.5rem;
 }
 
-.page-timer {
+.page-timer,
+.page-centered {
   width: 100%;
   max-width: 28rem;
   flex-shrink: 0;

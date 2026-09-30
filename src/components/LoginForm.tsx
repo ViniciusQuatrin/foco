@@ -19,7 +19,8 @@ export function LoginForm() {
   }
 
   return (
-    <div className="page">
+    <div className="center-shell">
+      <div className="page page-centered page-entrar">
       <AppHeader showEnter={false} />
       <main className="page-body">
         <div className="entrar-brand" aria-hidden="true">
@@ -81,6 +82,7 @@ export function LoginForm() {
           {nav.backTimer}
         </Link>
       </main>
+      </div>
     </div>
   );
 }
