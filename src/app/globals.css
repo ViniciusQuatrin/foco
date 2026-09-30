@@ -142,7 +142,7 @@ body {
 .page {
   position: relative;
   max-width: 28rem;
-  margin: 0 auto;
+  margin-inline: auto; /* keep vertical margins free for shell centering */
   padding: 0.75rem 0.875rem 1.25rem;
   border: 3px solid var(--border);
   box-shadow: var(--neon-glow);
@@ -229,17 +229,28 @@ body {
 }
 
 /* Center HUD card in the viewport (mobile-first): timer, entrar, historico.
-   min-height + flex + padding — not fixed 100vh — so short screens still scroll. */
+   Flex column + margin:auto on first/last child — works without `safe center`
+   support; when content overflows, auto margins collapse to 0 (top-aligned scroll). */
 .timer-shell,
 .center-shell {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: safe center;
   box-sizing: border-box;
   width: 100%;
+  min-height: 100vh; /* fallback when dvh unsupported */
   min-height: 100dvh;
   padding: 1.75rem 0.75rem 1.5rem;
+}
+
+.timer-shell > :first-child,
+.center-shell > :first-child {
+  margin-top: auto;
+}
+
+.timer-shell > :last-child,
+.center-shell > :last-child {
+  margin-bottom: auto;
 }
 
 .page-timer,
@@ -277,10 +288,16 @@ body {
   text-shadow: 0 0 12px color-mix(in srgb, var(--accent) 50%, transparent);
 }
 
-.brand-mark {
+img.brand-mark {
+  display: block;
   width: 36px;
   height: 36px;
+  max-width: 36px;
+  max-height: 36px;
+  min-width: 36px;
+  min-height: 36px;
   flex-shrink: 0;
+  object-fit: contain;
   border: 2px solid var(--border);
   background: #000;
   image-rendering: auto;
@@ -307,9 +324,13 @@ body {
     border: 0;
   }
 
-  .brand-mark {
+  img.brand-mark {
     width: 40px;
     height: 40px;
+    max-width: 40px;
+    max-height: 40px;
+    min-width: 40px;
+    min-height: 40px;
   }
 }
 
@@ -319,9 +340,15 @@ body {
   margin: 0.25rem 0 0.75rem;
 }
 
-.entrar-logo {
+img.entrar-logo {
+  display: block;
   width: 128px;
   height: 128px;
+  max-width: 128px;
+  max-height: 128px;
+  min-width: 128px;
+  min-height: 128px;
+  object-fit: contain;
   border: 3px solid var(--border);
   background: #000;
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 30%, transparent);
